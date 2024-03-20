@@ -2,6 +2,7 @@ package restaurantbiz
 
 import (
 	"context"
+	"go-food-delivery/common"
 	restaurantmodel "go-food-delivery/module/restaurant/model"
 )
 
@@ -19,7 +20,7 @@ func NewUpdateRestaurantBiz(store UpdateRestaurantStore) *updateRestaurantBiz {
 
 func (biz *updateRestaurantBiz) UpdateData(ctx context.Context, id int, data *restaurantmodel.RestaurantUpdate) error {
 	if err := biz.store.UpdateData(ctx, id, data); err != nil {
-		return err
+		return common.ErrCannotUpdateEntity(restaurantmodel.EntityName, err)
 	}
 	return nil
 }

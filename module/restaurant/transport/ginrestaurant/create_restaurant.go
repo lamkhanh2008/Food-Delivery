@@ -1,6 +1,7 @@
 package ginrestaurant
 
 import (
+	"go-food-delivery/common"
 	"go-food-delivery/component/appctx"
 	restaurantbiz "go-food-delivery/module/restaurant/biz"
 	restaurantmodel "go-food-delivery/module/restaurant/model"
@@ -14,9 +15,8 @@ func CreateRestaurantdb(appCtx appctx.AppContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data restaurantmodel.RestaurantCreate
 		if err := c.ShouldBind(&data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+
+			c.JSON(http.StatusBadRequest, common.ErrInvalidRequest(err))
 
 			return
 		}
@@ -24,15 +24,11 @@ func CreateRestaurantdb(appCtx appctx.AppContext) gin.HandlerFunc {
 		store := restaurantstorage.NewSQLStore(appCtx.GetMaiDBConnection())
 		biz := restaurantbiz.NewCreateRestaurantBiz(store)
 		if err := biz.CreateRestaurant(c.Request.Context(), &data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, err)
 			return
 		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"data": data,
-		})
+		data.Mask(true)
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data.FakeId.String()))
 
 	}
 }
