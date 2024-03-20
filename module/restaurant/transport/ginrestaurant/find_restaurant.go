@@ -1,36 +1,33 @@
 package ginrestaurant
 
 import (
+	"go-food-delivery/common"
 	"go-food-delivery/component/appctx"
 	restaurantbiz "go-food-delivery/module/restaurant/biz"
 	restaurantstorage "go-food-delivery/module/restaurant/storage"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func FindDataWithCondition(appCtx appctx.AppContext) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
+		uuid, err := common.FromBase58(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.ErrInvalidRequest(err))
 			return
 		}
 		store := restaurantstorage.NewSQLStore(appCtx.GetMaiDBConnection())
 		biz := restaurantbiz.NewFindRestaurantBiz(store)
-		data, err := biz.FindDataWithCondition(c.Request.Context(), id)
+		data, err := biz.FindDataWithCondition(c.Request.Context(), int(uuid.GetLocalID()))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, err)
 
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"data": data,
-		})
+
+		data.Mask(true)
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
 	}
 }

@@ -1,35 +1,29 @@
 package ginrestaurant
 
 import (
+	"go-food-delivery/common"
 	"go-food-delivery/component/appctx"
 	restaurantbiz "go-food-delivery/module/restaurant/biz"
 	restaurantstorage "go-food-delivery/module/restaurant/storage"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func DeleteRestaurant(appCtx appctx.AppContext) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
+
+		uuid, err := common.FromBase58(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
+			panic(common.ErrInvalidRequest(err))
 		}
 		store := restaurantstorage.NewSQLStore(appCtx.GetMaiDBConnection())
 		biz := restaurantbiz.NewDeleteRestaurantBiz(store)
 
-		if err := biz.DeleteRestaurant(c.Request.Context(), id); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+		if err := biz.DeleteRestaurant(c.Request.Context(), int(uuid.GetLocalID())); err != nil {
+			c.JSON(http.StatusBadRequest, err)
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"data": 1,
-		})
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }
