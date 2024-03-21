@@ -62,7 +62,7 @@ func main() {
 			"message": "pong",
 		})
 	})
-	restaurants := r.Group("/res")
+	restaurants := r.Group("/res", middleware.RequiredAuth(db))
 	restaurants.POST("/upload", ginupload.UploadImage(db))
 	restaurants.POST("/up", ginrestaurant.CreateRestaurantdb(db))
 	restaurants.GET("/:id", ginrestaurant.FindDataWithCondition(db))
